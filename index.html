@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Farm Attendance</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3d7a3d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f4f1e8;--card:#fff;--ink:#2b3a2b;--mut:#7a8577;--green:#4caf50;--yellow:#f6c343;--red:#e5534b;--blue:#4a90d9;--purple:#9b6bd1;--brand:#3d7a3d}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:80px}
+header{background:linear-gradient(135deg,#3d7a3d,#7cb342);color:#fff;padding:18px 16px 14px;border-radius:0 0 24px 24px;box-shadow:0 4px 12px #0002}
+header h1{margin:0;font-size:22px}
+header p{margin:4px 0 0;opacity:.9;font-size:14px}
+main{max-width:720px;margin:0 auto;padding:14px}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px #0001}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;box-shadow:0 -2px 10px #0002}
+nav button{flex:1;border:0;background:none;padding:10px 0 12px;font-size:12px;color:var(--mut);cursor:pointer}
+nav button span{display:block;font-size:22px}
+nav button.on{color:var(--brand);font-weight:700}
+button{font:inherit}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grow{flex:1}
+.wname{font-weight:700;font-size:16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{border:2px solid #e3e3e3;background:#fafafa;border-radius:20px;padding:6px 11px;font-size:14px;cursor:pointer;transition:transform .1s}
+.chip:active{transform:scale(.92)}
+.chip.on{color:#fff;border-color:transparent}
+.s-present.on{background:var(--green)}.s-half.on{background:var(--yellow);color:#4a3b00}.s-absent.on{background:var(--red)}
+.s-leave.on{background:var(--blue)}.s-sick.on{background:var(--purple)}.f-late.on{background:#ff9800}.f-ot.on{background:#00897b}
+.primary{background:var(--brand);color:#fff;border:0;border-radius:12px;padding:10px 14px;cursor:pointer}
+.ghost{background:#eee;border:0;border-radius:12px;padding:8px 12px;cursor:pointer}
+select,input{font:inherit;padding:9px;border:2px solid #ddd;border-radius:10px;background:#fff}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{text-align:center;font-size:12px;color:var(--mut);font-weight:700}
+.day{aspect-ratio:1;border-radius:10px;border:2px solid transparent;background:#f1f1ec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer;position:relative}
+.day small{font-size:15px;line-height:1}
+.day.today{border-color:var(--brand)}
+.day.fut{opacity:.45}
+.day.sun{background:#e8e6dc}
+.day.present{background:#c8ecc9}.day.half{background:#fbe8a8}.day.absent{background:#f8c4c0}.day.leave{background:#bfd8f3}.day.sick{background:#dcc9f1}
+.day i{position:absolute;top:1px;right:3px;font-size:10px;font-style:normal}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stat{background:#f6f5ef;border-radius:12px;padding:8px 4px}
+.stat b{display:block;font-size:20px}.stat span{font-size:11px;color:var(--mut)}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{width:calc(33.3% - 6px);text-align:center;background:#fff7d6;border-radius:12px;padding:8px 2px;font-size:11px}
+.badge b{display:block;font-size:26px}
+.badge.lock{filter:grayscale(1);opacity:.35;background:#eee}
+.lb{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee}
+.lb:last-child{border:0}
+.bar{height:8px;background:#e6e6e0;border-radius:6px;overflow:hidden;margin-top:4px}
+.bar div{height:100%;background:linear-gradient(90deg,#7cb342,#3d7a3d)}
+#modal{position:fixed;inset:0;background:#0006;display:none;align-items:flex-end;justify-content:center;z-index:9}
+#modal .box{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px}
+#toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-100px);background:#2b3a2b;color:#fff;padding:12px 18px;border-radius:24px;transition:transform .3s;z-index:20;font-weight:600;text-align:center}
+#toast.show{transform:translate(-50%,0)}
+h3{margin:0 0 8px}
+.pop{animation:pop .35s}
+#pill{display:inline-block;margin-top:8px;background:#fff3;border-radius:14px;padding:4px 12px;font-size:13px;cursor:pointer}
+textarea{width:100%;height:150px;font:12px monospace;border:2px solid #ddd;border-radius:10px;padding:8px}
+ol{padding-left:20px;line-height:1.6}
+button,.day,.chip{touch-action:manipulation}
+.sub{color:var(--mut);font-size:13px;margin:6px 0}
+@keyframes pop{50%{transform:scale(1.15)}}
+</style>
+</head>
+<body>
+<header><h1>🌾 Farm Attendance</h1><p id="hdate"></p><div id="pill" onclick="tab='sync';render()"></div></header>
+<main id="main"></main>
+<nav>
+ <button data-t="today"><span>📋</span>Today</button>
+ <button data-t="cal"><span>📅</span>Calendar</button>
+ <button data-t="team"><span>🏆</span>Team</button>
+ <button data-t="sync"><span>☁️</span>Sync</button>
+</nav>
+<div id="modal"><div class="box" id="mbox"></div></div>
+<div id="toast"></div>
+
+<script type="text/plain" id="gs">
+const SECRET='__SECRET__';
+const SHEET='Attendance';
+const WSHEET='Workers';
+const COLORS={present:'#c8ecc9',half:'#fbe8a8',absent:'#f8c4c0',leave:'#bfd8f3',sick:'#dcc9f1'};
+const CODES={present:'P',half:'H',absent:'A',leave:'Leave',sick:'Sick'};
+
+function out(o){return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON)}
+function doGet(){return out({ok:true,msg:'running'})}
+
+function logSheet(ss){
+  let sh=ss.getSheetByName(SHEET);
+  if(!sh){
+    sh=ss.insertSheet(SHEET);
+    const s1=ss.getSheetByName('Sheet1');
+    if(s1&&s1.getLastRow()===0&&ss.getSheets().length>1)ss.deleteSheet(s1);
+  }
+  if(sh.getLastRow()===0){
+    sh.appendRow(['Key','Date','Worker','Status','Late','Overtime','Updated']);
+    sh.setFrozenRows(1);sh.getRange(1,1,1,7).setFontWeight('bold');
+    sh.getRange('B:B').setNumberFormat('yyyy-mm-dd');
+    sh.getRange('G:G').setNumberFormat('yyyy-mm-dd hh:mm');
+    sh.hideColumns(1);
+  }
+  return sh;
+}
+function readLog(sh){
+  const n=sh.getLastRow();if(n<2)return [];
+  return sh.getRange(2,1,n-1,6).getValues().map(function(r){
+    const p=String(r[0]).split('|');
+    return {wid:p[0],date:p[1],worker:r[2],status:r[3],late:r[4]==='Yes',ot:r[5]==='Yes'};
+  });
+}
+function readWorkers(ss){
+  const w=ss.getSheetByName(WSHEET);
+  if(!w||w.getLastRow()<2)return [];
+  return w.getRange(2,1,w.getLastRow()-1,3).getValues().map(function(r){return {id:String(r[0]),name:String(r[1]),emoji:String(r[2])}});
+}
+function writeWorkers(ss,list){
+  const w=ss.getSheetByName(WSHEET)||ss.insertSheet(WSHEET);
+  w.clear();
+  w.getRange(1,1,1,3).setValues([['Id','Name','Emoji']]).setFontWeight('bold');
+  if(list.length)w.getRange(2,1,list.length,3).setValues(list.map(function(x){return [x.id,x.name,x.emoji||'']}));
+}
+
+function rebuildSummary(ss,log){
+  const agg={};
+  log.forEach(function(r){
+    if(!CODES[r.status])return;
+    const m=String(r.date).substring(0,7),k=m+'|'+r.wid;
+    const a=agg[k]||(agg[k]={m:m,w:r.worker,present:0,half:0,absent:0,leave:0,sick:0,late:0,ot:0});
+    a[r.status]++;if(r.late)a.late++;if(r.ot)a.ot++;
+  });
+  const list=Object.keys(agg).map(function(k){return agg[k]}).sort(function(a,b){
+    return a.m<b.m?1:a.m>b.m?-1:(a.w<b.w?-1:1);
+  });
+  const data=list.map(function(a){
+    const base=a.present+a.half+a.absent;
+    return [a.m,a.w,a.present,a.half,a.absent,a.leave,a.sick,a.late,a.ot,base?(a.present+a.half*0.5)/base:''];
+  });
+  const sh=ss.getSheetByName('Summary')||ss.insertSheet('Summary');
+  sh.clear();
+  sh.getRange(1,1,1,10).setValues([['Month','Worker','Present','Half days','Absent','Leave','Sick','Late','Overtime','Attendance %']]).setFontWeight('bold');
+  sh.setFrozenRows(1);
+  if(data.length){
+    sh.getRange(2,1,data.length,1).setNumberFormat('@');
+    sh.getRange(2,1,data.length,10).setValues(data);
+    sh.getRange(2,10,data.length,1).setNumberFormat('0%');
+  }
+}
+
+function rebuildGrid(ss,log,workers,month){
+  const y=parseInt(month.substring(0,4),10),m=parseInt(month.substring(5,7),10),days=new Date(y,m,0).getDate();
+  const sh=ss.getSheetByName('Grid '+month)||ss.insertSheet('Grid '+month);
+  sh.clear();
+  const order=[],names={},cell={};
+  workers.forEach(function(w){order.push(w.id);names[w.id]=w.name});
+  log.forEach(function(r){
+    if(String(r.date).substring(0,7)!==month)return;
+    if(!names[r.wid]){names[r.wid]=r.worker;order.push(r.wid)}
+    cell[r.wid+'|'+parseInt(String(r.date).substring(8),10)]=r;
+  });
+  const head=['Worker'];
+  for(let d=1;d<=days;d++)head.push(d);
+  ['Present','Half','Absent','Leave','Sick','Late','Overtime'].forEach(function(h){head.push(h)});
+  const vals=[head],bgs=[head.map(function(){return '#e8e6dc'})];
+  order.forEach(function(id){
+    const row=[names[id]],bg=['#ffffff'],t={present:0,half:0,absent:0,leave:0,sick:0,late:0,ot:0};
+    for(let d=1;d<=days;d++){
+      const r=cell[id+'|'+d];
+      if(r&&CODES[r.status]){
+        t[r.status]++;if(r.late)t.late++;if(r.ot)t.ot++;
+        row.push(CODES[r.status]+(r.late?' +L':'')+(r.ot?' +OT':''));bg.push(COLORS[r.status]);
+      }else{row.push('');bg.push('#ffffff')}
+    }
+    [t.present,t.half,t.absent,t.leave,t.sick,t.late,t.ot].forEach(function(v){row.push(v);bg.push('#ffffff')});
+    vals.push(row);bgs.push(bg);
+  });
+  const rng=sh.getRange(1,1,vals.length,head.length);
+  rng.setValues(vals);rng.setBackgrounds(bgs);
+  sh.getRange(1,1,1,head.length).setFontWeight('bold');
+  sh.setFrozenRows(1);sh.setFrozenColumns(1);
+  sh.getRange(1,2,vals.length,head.length-1).setHorizontalAlignment('center');
+}
+
+function doPost(e){
+  const lock=LockService.getScriptLock();lock.waitLock(20000);
+  try{
+    const d=JSON.parse(e.postData.contents);
+    if(d.secret!==SECRET)return out({ok:false,error:'wrong secret'});
+    const ss=SpreadsheetApp.getActiveSpreadsheet();
+    const sh=logSheet(ss);
+
+    if(d.action==='dump'){
+      return out({ok:true,workers:readWorkers(ss),rows:readLog(sh)});
+    }
+
+    const rows=d.rows||[];
+    const last=sh.getLastRow();
+    const keys=last>1?sh.getRange(2,1,last-1,1).getValues().map(function(r){return r[0]}):[];
+    const idx={};keys.forEach(function(k,i){idx[k]=i+2});
+    const now=new Date(),del=[],add=[],months={};
+    rows.forEach(function(r){
+      months[String(r.date).substring(0,7)]=1;
+      const row=[r.key,r.date,r.worker,r.status,r.late?'Yes':'',r.ot?'Yes':'',now];
+      if(!r.status){if(idx[r.key])del.push(idx[r.key])}
+      else if(idx[r.key]){sh.getRange(idx[r.key],1,1,7).setValues([row])}
+      else add.push(row);
+    });
+    if(add.length)sh.getRange(sh.getLastRow()+1,1,add.length,7).setValues(add);
+    del.sort(function(a,b){return b-a}).forEach(function(r){sh.deleteRow(r)});
+    const n=sh.getLastRow();
+    if(n>2)sh.getRange(2,1,n-1,7).sort([{column:2,ascending:false},{column:3,ascending:true}]);
+
+    if(d.workers&&d.workers.length)writeWorkers(ss,d.workers);
+    if(rows.length){
+      const log=readLog(sh),workers=readWorkers(ss);
+      rebuildSummary(ss,log);
+      Object.keys(months).forEach(function(m){rebuildGrid(ss,log,workers,m)});
+    }
+    return out({ok:true});
+  }catch(err){return out({ok:false,error:String(err)})}
+  finally{lock.releaseLock()}
+}
+</script>
+<script>
+const ST={present:['✅','Present'],half:['🌗','Half day'],absent:['❌','Absent'],leave:['🏖️','Leave'],sick:['🤒','Sick']};
+const EMOJI=['👨‍🌾','👩‍🌾','🧑‍🌾','🚜','🌽','🍇','🍊','🐄','🐑','🐓'];
+let S;try{S=JSON.parse(localStorage.getItem('att')||'null')}catch(e){}
+S=S||{workers:[],days:{}};S.queue=S.queue||{};S.cfg=S.cfg||{url:'',secret:''};
+let tab='today',selW=null,cur=new Date();cur.setDate(1);
+const save=()=>{try{localStorage.setItem('att',JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayS=()=>ds(new Date());
+const k=(w,d)=>w+'|'+d;
+const get=(w,d)=>S.days[k(w,d)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+function entries(w){return Object.keys(S.days).filter(x=>x.startsWith(w+'|')).map(x=>[x.split('|')[1],S.days[x]]).sort((a,b)=>a[0]<b[0]?-1:1)}
+function streaks(w){let c=0,b=0;for(const[,e]of entries(w)){if(e.s==='present'||e.s==='half'){c++;b=Math.max(b,c)}else if(e.s==='absent')c=0}return{cur:c,best:b}}
+function mstats(w,y,m){const r={present:0,half:0,absent:0,leave:0,sick:0,late:0,ot:0};
+ for(const[d,e]of entries(w)){const [yy,mm]=d.split('-').map(Number);if(yy===y&&mm===m+1){r[e.s]++;if(e.late)r.late++;if(e.ot)r.ot++}}
+ const base=r.present+r.half+r.absent;r.pct=base?Math.round((r.present+r.half*.5)/base*100):0;return r}
+function badges(w){const all=entries(w).map(x=>x[1]),sk=streaks(w),n=new Date(),ms=mstats(w,n.getFullYear(),n.getMonth());
+ const pres=all.filter(e=>e.s==='present').length,ot=all.filter(e=>e.ot).length;
+ return[['🌱','First Day',pres>=1],['🔥','5-Day Streak',sk.best>=5],['⚡','10-Day Streak',sk.best>=10],['🏆','20-Day Streak',sk.best>=20],
+ ['⏰','Always On Time',ms.present>=10&&ms.late===0],['💪','Overtime Hero',ot>=3],['⭐','Perfect Month',ms.absent===0&&ms.present>=15],['🌟','50 Days Worked',pres>=50],['🐂','Rock Solid 90%+',ms.pct>=90&&ms.present+ms.half+ms.absent>=10]]}
+
+function setStatus(w,d,s,flags){
+ const before=streaks(w).cur;
+ if(!s){delete S.days[k(w,d)]}else{const o=get(w,d)||{};S.days[k(w,d)]={s,late:flags?flags.late:(s==='present'||s==='half')?!!o.late:false,ot:flags?flags.ot:(s==='present'||s==='half')?!!o.ot:false}}
+ save();q(w,d);const after=streaks(w).cur,nm=(S.workers.find(x=>x.id===w)||{}).name;
+ if(after>before&&[3,5,10,15,20,30].includes(after))toast(`🔥 ${nm}: ${after}-day streak!`);
+ else if(s==='present')toast('Nice! 🌟');
+}
+
+function render(){
+ $('#hdate').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ if(!S.workers.length&&tab!=='team'&&tab!=='sync'){tab='team';return render()}
+ $('#main').innerHTML=tab==='today'?vToday():tab==='cal'?vCal():tab==='sync'?vSync():vTeam();
+ updatePill();
+}
+
+function chips(w,d,e){e=e||{};return Object.entries(ST).map(([s,[i,l]])=>`<button class="chip s-${s} ${e.s===s?'on pop':''}" onclick="mark('${w}','${d}','${s}')">${i} ${l}</button>`).join('')}
+function vToday(){const d=todayS();
+ return `<div class="card row"><div class="grow"><b>Today's register</b></div><button class="primary" onclick="allPresent()">✅ Everyone present</button></div>`+
+ S.workers.map(w=>{const e=get(w.id,d)||{},ok=e.s==='present'||e.s==='half',sk=streaks(w.id).cur;
+ return `<div class="card"><div class="row"><span style="font-size:30px">${w.emoji}</span><div class="grow"><div class="wname">${esc(w.name)}</div><small style="color:var(--mut)">${sk?'🔥 '+sk+' day streak':'No streak yet'}</small></div></div>
+ <div class="chips">${chips(w.id,d,e)}</div>
+ ${ok?`<div class="chips"><button class="chip f-late ${e.late?'on':''}" onclick="flag('${w.id}','${d}','late')">🕐 Late</button><button class="chip f-ot ${e.ot?'on':''}" onclick="flag('${w.id}','${d}','ot')">⏱️ Overtime</button></div>`:''}</div>`}).join('')}
+function mark(w,d,s){const e=get(w,d);setStatus(w,d,e&&e.s===s?null:s);if(modalOpen)openDay(w,d);render()}
+function flag(w,d,f){const e=get(w,d);if(!e)return;e[f]=!e[f];save();q(w,d);if(modalOpen)openDay(w,d);render()}
+function allPresent(){const d=todayS();S.workers.forEach(w=>{if(!get(w.id,d))setStatus(w.id,d,'present')});toast('Everyone marked present 🎉');render()}
+
+function vCal(){
+ if(!selW||!S.workers.find(w=>w.id===selW))selW=S.workers[0].id;
+ const y=cur.getFullYear(),m=cur.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,n=new Date(y,m+1,0).getDate(),t=todayS();
+ let cells='';['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(x=>cells+=`<div class="dow">${x}</div>`);
+ for(let i=0;i<first;i++)cells+='<div></div>';
+ for(let d=1;d<=n;d++){const D=`${y}-${pad(m+1)}-${pad(d)}`,e=get(selW,D),dow=new Date(y,m,d).getDay();
+  cells+=`<div class="day ${e?e.s:''} ${D===t?'today':''} ${D>t?'fut':''} ${dow===0?'sun':''}" onclick="openDay('${selW}','${D}')">${d}<small>${e?ST[e.s][0]:''}</small><i>${e&&e.late?'🕐':''}${e&&e.ot?'⏱️':''}</i></div>`}
+ const r=mstats(selW,y,m),sk=streaks(selW),w=S.workers.find(x=>x.id===selW);
+ return `<div class="card"><div class="row"><select class="grow" onchange="selW=this.value;render()">${S.workers.map(x=>`<option value="${x.id}" ${x.id===selW?'selected':''}>${x.emoji} ${esc(x.name)}</option>`).join('')}</select></div></div>
+ <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><button class="ghost" onclick="mon(-1)">◀</button><b>${cur.toLocaleDateString('en-ZA',{month:'long',year:'numeric'})}</b><button class="ghost" onclick="mon(1)">▶</button></div><div class="cal">${cells}</div></div>
+ <div class="card"><h3>📊 This month</h3><div class="stats">
+ <div class="stat"><b>${r.present}</b><span>Present</span></div><div class="stat"><b>${r.half}</b><span>Half days</span></div><div class="stat"><b>${r.absent}</b><span>Absent</span></div>
+ <div class="stat"><b>${r.leave+r.sick}</b><span>Leave/Sick</span></div><div class="stat"><b>${r.late}</b><span>Late</span></div><div class="stat"><b>${r.ot}</b><span>Overtime</span></div>
+ <div class="stat"><b>${r.pct}%</b><span>Attendance</span></div><div class="stat"><b>🔥 ${sk.cur}</b><span>Streak</span></div><div class="stat"><b>🏅 ${sk.best}</b><span>Best streak</span></div></div></div>
+ <div class="card"><h3>🎖️ Badges</h3><div class="badges">${badges(selW).map(([i,l,ok])=>`<div class="badge ${ok?'':'lock'}"><b>${i}</b>${l}</div>`).join('')}</div></div>`}
+function mon(x){cur.setMonth(cur.getMonth()+x);render()}
+
+let modalOpen=false;
+function openDay(w,d){modalOpen=true;const e=get(w,d)||{},wk=S.workers.find(x=>x.id===w),ok=e.s==='present'||e.s==='half';
+ $('#mbox').innerHTML=`<h3>${wk.emoji} ${esc(wk.name)}</h3><p style="margin:0 0 6px;color:var(--mut)">${new Date(d+'T12:00').toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'})}</p>
+ <div class="chips">${chips(w,d,e)}</div>
+ ${ok?`<div class="chips"><button class="chip f-late ${e.late?'on':''}" onclick="flag('${w}','${d}','late')">🕐 Late</button><button class="chip f-ot ${e.ot?'on':''}" onclick="flag('${w}','${d}','ot')">⏱️ Overtime</button></div>`:''}
+ <div class="row" style="margin-top:14px"><button class="ghost grow" onclick="mark('${w}','${d}','${e.s||''}');closeM()">Clear</button><button class="primary grow" onclick="closeM()">Done</button></div>`;
+ $('#modal').style.display='flex'}
+function closeM(){modalOpen=false;$('#modal').style.display='none';render()}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeM()});
+
+function vTeam(){const n=new Date(),y=n.getFullYear(),m=n.getMonth();
+ const rows=S.workers.map(w=>({w,r:mstats(w.id,y,m),s:streaks(w.id)})).sort((a,b)=>b.r.pct-a.r.pct||b.s.cur-a.s.cur);
+ return `<div class="card"><h3>➕ Add worker</h3><div class="row"><input id="nn" class="grow" placeholder="Name" onkeydown="if(event.key==='Enter')addW()"><button class="primary" onclick="addW()">Add</button></div></div>`+
+ (rows.length?`<div class="card"><h3>🏆 Leaderboard – ${n.toLocaleDateString('en-ZA',{month:'long'})}</h3>${rows.map((x,i)=>`<div class="lb"><span style="font-size:22px">${['🥇','🥈','🥉'][i]||x.w.emoji}</span><div class="grow"><b>${esc(x.w.name)}</b> <small style="color:var(--mut)">🔥${x.s.cur} · ${x.r.present+x.r.half}d worked</small><div class="bar"><div style="width:${x.r.pct}%"></div></div></div><b>${x.r.pct}%</b><button class="ghost" onclick="delW('${x.w.id}')">🗑️</button></div>`).join('')}</div>`:'<div class="card">Add your first worker to get started 👆</div>');}
+function addW(){const v=$('#nn').value.trim();if(!v)return;S.workers.push({id:'w'+Date.now(),name:v,emoji:EMOJI[S.workers.length%EMOJI.length]});S.wdirty=true;save();trySync();render()}
+function delW(id){const w=S.workers.find(x=>x.id===id);if(!confirm(`Remove ${w.name} and all their records?`))return;S.workers=S.workers.filter(x=>x.id!==id);Object.keys(S.days).forEach(x=>{if(x.startsWith(id+'|')){S.queue[x]={key:x,date:x.split('|')[1],worker:w.name,status:'',late:false,ot:false};delete S.days[x]}});S.wdirty=true;save();trySync();render()}
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+/* ---------- Google Sheet sync (offline-first) ---------- */
+let syncing=false,lastErr='';
+function q(w,d){const e=get(w,d),wk=S.workers.find(x=>x.id===w);if(!wk)return;
+ S.queue[k(w,d)]={key:k(w,d),date:d,worker:wk.name,status:e?e.s:'',late:e?!!e.late:false,ot:e?!!e.ot:false};save();trySync()}
+function pillText(){const n=Object.keys(S.queue).length+(S.wdirty?1:0);
+ if(!S.cfg.url)return '⚙️ Sheet sync not set up';
+ if(!navigator.onLine)return '📴 Offline'+(n?` · ${n} waiting`:'');
+ if(lastErr&&n)return `⚠️ ${n} waiting · ${lastErr}`;
+ return n?`🔄 ${n} waiting`:'✅ Synced to Sheet'}
+function updatePill(){const p=$('#pill');if(p)p.textContent=pillText();const s=$('#sst');if(s)s.textContent=pillText()}
+async function post(rows,extra){const r=await fetch(S.cfg.url,{method:'POST',body:JSON.stringify(Object.assign({secret:S.cfg.secret,rows},extra||{}))});return r.json()}
+async function trySync(){
+ if(syncing||!S.cfg.url||!navigator.onLine)return updatePill();
+ syncing=true;
+ try{
+  for(let pass=0;pass<5;pass++){
+   let items,ok=true;
+   while((items=Object.values(S.queue).slice(0,200)).length){
+    const j=await post(items,{workers:S.workers});
+    if(!j.ok){lastErr=j.error||'error';ok=false;break}
+    items.forEach(i=>{if(S.queue[i.key]===i)delete S.queue[i.key]});save();lastErr='';
+   }
+   if(ok&&S.wdirty){S.wdirty=false;let j;
+    try{j=await post([],{workers:S.workers})}catch(e){S.wdirty=true;throw e}
+    if(!j.ok){S.wdirty=true;lastErr=j.error||'error';ok=false}else{save();lastErr=''}}
+   if(!ok||(!Object.keys(S.queue).length&&!S.wdirty))break;
+  }
+ }catch(e){lastErr='no connection'}
+ syncing=false;updatePill();
+}
+function vSync(){
+ if(!S.cfg.secret){S.cfg.secret=Array.from(crypto.getRandomValues(new Uint8Array(9)),b=>b.toString(36).padStart(2,'0')).join('');save()}
+ const code=$('#gs').textContent.trim().replace('__SECRET__',S.cfg.secret);
+ return `<div class="card"><h3>☁️ Google Sheet sync</h3><p id="sst" style="margin-top:0"></p>
+ <input id="cu" style="width:100%" placeholder="Web app URL (or a phone setup code)" value="${esc(S.cfg.url)}">
+ <input id="cs" style="width:100%;margin-top:8px" placeholder="Secret (must match the script)" value="${esc(S.cfg.secret)}">
+ <div class="row" style="margin-top:8px"><button class="primary" onclick="saveCfg()">Save</button><button class="ghost" onclick="testCfg()">Test</button><button class="ghost" onclick="trySync();toast('Syncing…')">Sync now</button></div>
+ <div class="row" style="margin-top:8px"><button class="ghost" onclick="restoreSheet()">⬇️ Restore from Sheet</button><button class="ghost" onclick="resendAll()">📤 Re-send everything</button><button class="ghost" onclick="copyPhone()">📋 Copy phone setup code</button></div>
+ <p class="sub">Phone setup code = URL + secret in one line. Set the Sheet up on your computer, copy the code, send it to your phone and paste it into the first box.</p></div>
+ <div class="card"><h3>🛠️ One-time Sheet setup (needs internet)</h3><ol>
+ <li>In Google Drive (work account) create a <b>blank Google Sheet</b>.</li>
+ <li>Open <b>Extensions → Apps Script</b>. Delete everything there, paste the code below, click Save 💾.</li>
+ <li>Click <b>Deploy → New deployment</b> → gear icon → <b>Web app</b>. Execute as <b>Me</b>, Who has access <b>Anyone</b>. Click Deploy and allow access (Advanced → Go to project).</li>
+ <li>Copy the <b>Web app URL</b>, paste it above, press <b>Save</b> then <b>Test</b>.</li>
+ <li>Share the Sheet with the two computers' Google accounts as <b>Viewer</b>.</li></ol>
+ <textarea id="gcode" readonly>${esc(code)}</textarea>
+ <button class="primary" style="margin-top:8px" onclick="copyCode()">📋 Copy code</button>
+ <p class="sub">The code already contains your private secret. If you ever change the code, use <b>Deploy → Manage deployments → Edit → New version</b> so the URL stays the same. The Sheet gets tabs: <b>Attendance</b> (log), <b>Grid yyyy-mm</b> (monthly register), <b>Summary</b> and <b>Workers</b>.</p></div>`}
+function readCfg(){let u=$('#cu').value.trim(),s=$('#cs').value.trim();
+ if(u.includes('|')){const p=u.split('|');u=p[0].trim();s=(p[1]||'').trim()}
+ S.cfg.url=u;if(s)S.cfg.secret=s;save()}
+function saveCfg(){readCfg();toast('Saved ✅');render();trySync()}
+async function testCfg(){readCfg();
+ if(!S.cfg.url)return toast('Paste the URL first');
+ try{const j=await post([]);toast(j.ok?'✅ Connected!':'❌ '+(j.error||'failed'))}catch(e){toast('❌ Cannot reach it (offline or wrong URL)')}}
+function resendAll(){Object.keys(S.days).forEach(x=>{const[w,d]=x.split('|');q(w,d)});S.wdirty=true;save();trySync();toast('Queued everything 📤')}
+async function restoreSheet(){
+ if(!S.cfg.url)return toast('Set up sync first');
+ if(!confirm('Pull the history from the Sheet into this phone? Nothing already here is overwritten.'))return;
+ try{const j=await post(null,{action:'dump'});
+  if(!j.ok)return toast('❌ '+(j.error||'failed'));
+  let a=0;
+  (j.workers||[]).forEach(w=>{if(!S.workers.find(x=>x.id===w.id))S.workers.push({id:w.id,name:w.name,emoji:w.emoji||EMOJI[S.workers.length%EMOJI.length]})});
+  (j.rows||[]).forEach(r=>{if(!r.status)return;const key=r.wid+'|'+r.date;
+   if(!S.workers.find(x=>x.id===r.wid))S.workers.push({id:r.wid,name:r.worker,emoji:EMOJI[S.workers.length%EMOJI.length]});
+   if(!S.days[key]){S.days[key]={s:r.status,late:!!r.late,ot:!!r.ot};a++}});
+  save();render();toast(`✅ Restored ${a} entries, ${S.workers.length} workers`)
+ }catch(e){toast('❌ Cannot reach the Sheet')}}
+function copyText(t){const x=document.createElement('textarea');x.value=t;x.style.position='fixed';x.style.opacity=0;document.body.appendChild(x);x.select();
+ let ok=false;try{ok=document.execCommand('copy')}catch(e){}x.remove();
+ if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t).catch(()=>{});return ok}
+function copyPhone(){if(!S.cfg.url)return toast('Save the URL first');copyText(S.cfg.url+'|'+S.cfg.secret);toast('Setup code copied 📋')}
+function copyCode(){const t=$('#gcode');t.select();document.execCommand('copy');toast('Copied 📋')}
+window.addEventListener('online',trySync);window.addEventListener('offline',updatePill);
+setInterval(trySync,60000);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();trySync();
+</script>
+</body>
+</html>
